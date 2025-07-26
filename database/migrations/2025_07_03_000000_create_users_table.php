@@ -1,45 +1,30 @@
 <?php
 
-namespace App\Http\Requests;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class UpdateUserRequest extends FormRequest
+return new class extends Migration
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Run the migrations.
      */
-    public function authorize(): bool
+    public function up(): void
     {
-        $user = $this->route('user');
-        return $this->user()->can('update', $user);
+        Schema::users('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->string('email')->unique();
+            $table->text('profile')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Reverse the migrations.
      */
-    public function rules(): array
+    public function down(): void
     {
-        return [
-            'name' => 'bail|sometimes|string|min:3|max:30|regex:/^[\p{L}0-9_\s]{3,30}$/u|unique:users',
-            'email' => 'bail|sometimes|string|email:rfc,dns|max:320|unique:users',
-            'password' => 'bail|sometimes|string|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d).{6,}$/',
-            'profile' =>  [
-                'bail',
-                'sometimes',
-                'image',
-                'mimes:png,jpg,jpeg',
-                'max:4096',
-                Rule::dimensions()->maxWidth(2000)->maxHeight(2000),
-                function ($attribute, $value, $fail) {
-                    if ($value && preg_match('/\.[^.]+\./', $value->getClientOriginalName())) {
-                        $fail('Invalid image file name detected.');
-                    }
-                }
-            ],
-        ];
+        Schema::dropIfExists('boards');
     }
-}
+};
