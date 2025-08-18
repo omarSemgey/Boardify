@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('boards', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('description')->nullable();
+            $table->uuid('uuid')->unique()->after('id');
+            $table->foreignId('user_id')->constrained();
             $table->enum('visibility', ['public', 'semi-public', 'private'])->default('private');
             $table->timestamps();
         });
