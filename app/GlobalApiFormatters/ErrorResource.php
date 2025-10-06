@@ -9,10 +9,9 @@ class ErrorResource extends JsonResource
 {
     protected int $httpCode = 500;
 
-    public function withHttpCode(int $code): static
+    public function withHttpCode(int $httpCode)
     {
-        $this->httpCode = $code;
-        return $this;
+        return response()->json($this->toArray(request()), $httpCode);
     }
 
     public function toArray($request): array

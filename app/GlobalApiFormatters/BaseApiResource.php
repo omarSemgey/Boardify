@@ -17,7 +17,7 @@ class BaseApiResource extends JsonResource
         $this->httpCode = $httpCode;
         return $this;
     }
-
+    
     public function with($request): array
     {
         return [

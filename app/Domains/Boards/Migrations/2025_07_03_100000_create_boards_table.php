@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
-            $table->uuid('uuid')->unique()->after('id');
+            $table->uuid('uuid')->unique();
             $table->foreignId('user_id')->constrained();
             $table->enum('visibility', ['public', 'semi-public', 'private'])->default('private');
             $table->timestamps();

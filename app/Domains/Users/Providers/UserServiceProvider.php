@@ -21,6 +21,9 @@ class UserServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(realpath(__DIR__ . '/../Migrations'));
-        $this->loadRoutesFrom(realpath(__DIR__ . '/../Routes/api/api.php'));
+        Route::middleware('api')->group(function () {
+            require __DIR__ . '/../Routes/Api/Api.php';
+            require __DIR__ . '/../Routes/Api/AuthApi.php';
+        });
     }
 }

@@ -7,10 +7,12 @@ use App\GlobalPolicies\GlobalPolicy;
 use App\Domains\Users\Providers\UserServiceProvider;
 use App\Domains\Boards\Providers\BoardServiceProvider;
 use App\Domains\Notes\Providers\NoteServiceProvider;
-use App\Domains\Notes\Providers\PermissionServiceProvider;
+use App\Domains\Permissions\Providers\PermissionServiceProvider;
 use App\Domains\Types\Providers\TypeServiceProvider;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Log;
 
 class GlobalServiceProvider extends ServiceProvider
 {

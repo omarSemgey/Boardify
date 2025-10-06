@@ -5,8 +5,7 @@ namespace App\Domains\Users\Controllers;
 use App\Domains\Users\Requests\LoginRequest;
 use App\Domains\Users\Requests\StoreUserRequest;
 
-use App\Domains\Users\Helpers\AuthCookieHelper;
-
+use App\Domains\Users\Helpers\AuthTokenManager;
 use App\GlobalApiFormatters\BaseApiResource;
 use App\GlobalApiFormatters\AuthResource;
 
@@ -24,90 +23,41 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        try{
-            $result = $this->userAuthservice->login($request->validate());
+        $credentials = $request->validated();
+        $result = $this->userAuthservice->login($credentials);
 
-            $response = (new AuthResource($result['user']))->withMessage('User created successfully',201) ->response();
+        $response = (new AuthResource($result['user']))->withMessage('User logged in successfully.',201)->response();
 
-            return AuthCookieHelper::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
-    
-        } catch (\Throwable $err) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User login failed. Please try again later.',
-            ], 500)
-            ->withoutCookie('access_token')
-            ->withoutCookie('refresh_token');
-        }
+        return AuthTokenManager::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
     }
 
     public function me()
     {
-        try {
-            $user = $this->userAuthservice->me();
+        $user = $this->userAuthservice->me();
 
-            return (new BaseApiResource($user))->withMessage('User found successfully', 200)->additional(['user' => $user]);
-
-        } catch (\Exception $e) {
-            return response()
-            ->json([
-                    'error' => 'invalid_token'
-                ], 401)
-                ->withoutCookie('access_token')
-                ->withoutCookie('refresh_token');
-        }    
-    }
+        return (new BaseApiResource($user))->withMessage('User found successfully.', 200)->additional(['user' => $user]);
+    }    
 
     public function register(StoreUserRequest $request)
     {
-        try {
-            $result = $this->userAuthservice->register($request->validated());
+        $result = $this->userAuthservice->register($request->validated());
 
-            $response =  (new AuthResource($result['user']))->withMessage('User created successfully',201)->response();
-            return AuthCookieHelper::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
-
-        } catch (\Throwable $err) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User registration failed. Please try again later.',
-            ], 500)
-            ->withoutCookie('access_token')
-            ->withoutCookie('refresh_token');
-        }
+        $response =  (new AuthResource($result['user']))->withMessage('User created successfully.',201)->response();
+        return AuthTokenManager::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
     }
 
     public function logout()
     {
-        try {
-            
-            $user =  $this->userAuthservice->logout();
-            return (new BaseApiResource($user))->withMessage('Logout successfull', 200)->response()
-            ->withoutCookie('access_token')
-            ->withoutCookie('refresh_token');
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Logout failed',
-                'error' => $e
-            ], 500);
-        }
+        $user =  $this->userAuthservice->logout();
+        return (new BaseApiResource($user))->withMessage('Logout successfull.', 200)->response();
     }
 
     public function refresh()
     {
-        try {
-            $result =$this->userAuthservice->refresh();
+        $result =$this->userAuthservice->refresh();
 
-            $response = (new AuthResource($result['user']))->withMessage('Token refreshed successfully',201)->response();
-            return AuthCookieHelper::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Token refresh failed'
-            ], 401)
-            ->withoutCookie('access_token')
-            ->withoutCookie('refresh_token');
-        }
+        $response = (new BaseApiResource(null))->withMessage('Token refreshed successfully.', 200)->response();
+
+        return AuthTokenManager::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
     }
 }

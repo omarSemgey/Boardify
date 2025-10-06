@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Domains\Users\Services;
+
+use App\Domains\Users\Helpers\AuthTokenManager;
 use Illuminate\Support\Facades\Auth;
 use App\Domains\Users\Services\UserCrudService;
-use Illuminate\Support\Facades\Log;
+use App\GlobalExceptions\ApiException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserAuthService
@@ -14,18 +16,18 @@ class UserAuthService
         $this->userCrudService = $userCrudService;
     }
 
-    public function login(array $data):array
+    public function login(array $credentials):array
     {
         try{         
-            $accessToken = Auth::guard('api')->attempt($data);
-    
-            if (!$accessToken) {
-                Log::error('Unauthorized.',);
-                throw new \Exception('Unauthorized');
+            $accessToken = AuthTokenManager::createAccessToken($credentials);
+
+            if(!$accessToken){
+                throw new ApiException('Invalid email or password.', 401);
             }
-    
+
             $user = Auth::guard('api')->user();
-            $refreshToken = JWTAuth::fromUser($user);
+            
+            $refreshToken = AuthTokenManager::createRefreshToken($user);
     
             return [
                 'user' => $user,
@@ -33,9 +35,10 @@ class UserAuthService
                 'refresh_token' => $refreshToken,
             ];
 
+        } catch (ApiException $err) {
+            throw $err;
         } catch (\Throwable $err) {
-            Log::error('Login failed', ['error' => $err]);
-            throw new \Exception('Login failed. Please try again later');
+            throw new ApiException('User login failed. Please try again later.', 500, $err);
         }
     }
 
@@ -44,32 +47,25 @@ class UserAuthService
         try {
             $accessToken = request()->cookie('access_token'); 
             
-            if (!$accessToken) {
-                Log::error('Unauthorized.',);
-                throw new \Exception('Unauthorized');
-            }
-
             $user = JWTAuth::setToken($accessToken)->authenticate();
 
             if (!$user) {
-                Log::error('User not found.',);
-               throw new \Exception('User not found');
+                throw new ApiException('User not found.', 404);
             }
 
             return $user;
         } catch (\Exception $err) {
-            Log::error('User not found.', ['error' => $err]);
-            throw new \Exception('User not found. Please try again later');
+            throw new ApiException('User not found.', 404, $err);
         }    
     }
 
-    public function register(array $data):array
+    public function register(array $credentials):array
     {
         try {
-            $createdUser = $this->userCrudService->store($data);
+            $createdUser = $this->userCrudService->store($credentials);
 
-            $accessToken = Auth::guard('api')->login($createdUser);
-            $refreshToken = JWTAuth::fromUser($createdUser);
+            $accessToken = AuthTokenManager::createAccessToken($credentials);
+            $refreshToken = AuthTokenManager::createRefreshToken($createdUser);
 
             return [
                 'user' => $createdUser,
@@ -78,8 +74,7 @@ class UserAuthService
             ];
 
         }  catch (\Throwable $err) {
-            Log::error('User registration failed', ['error' => $err]);
-            throw new \Exception(message: 'User registration failed. Please try again later');
+            throw new ApiException('User registration failed. Please try again later.', 500, $err);
         }
     }
 
@@ -89,24 +84,17 @@ class UserAuthService
             $refreshToken = request()->cookie('refresh_token');
             $accessToken = request()->cookie('access_token');
 
+            if (!$accessToken) {
+                throw new ApiException('No access token provided', 401);
+            }
+
             $user = JWTAuth::setToken($accessToken)->authenticate();
-            
-            if (!$refreshToken) {
-                throw new \Exception('No refresh token');
-            }
 
-            if (!$user) {
-                Log::error('User not found.');
-                throw new \Exception('User not found');
-            }
-
-            JWTAuth::invalidate($refreshToken);
-            JWTAuth::invalidate($accessToken);
+            AuthTokenManager::invalidateTokens($accessToken,$refreshToken);
 
             return $user;
         } catch (\Throwable $err) {
-            Log::error('logout failed', ['error' => $err]);
-            throw new \Exception('logout failed. Please try again later');
+            throw new ApiException('logout failed. Please try again later.', 500, $err);
         }
     }
 
@@ -114,28 +102,23 @@ class UserAuthService
     {
         try {
             $oldRefreshToken = request()->cookie('refresh_token');
-
-            if (!$oldRefreshToken) {
-                throw new \Exception('No refresh token');
-            }
+            $oldAccessToken = request()->cookie('access_token');
 
             $user = JWTAuth::setToken($oldRefreshToken)->authenticate();
 
-            $newAccessToken = auth('api')->login($user);
+            $newAccessToken = JWTAuth::customClaims(['type' => 'access'])->fromUser($user);
 
-            $newRefreshToken = JWTAuth::fromUser($user);
+            $newRefreshToken = AuthTokenManager::createRefreshToken($user);
 
-            JWTAuth::invalidate($oldRefreshToken);
+            AuthTokenManager::invalidateTokens($oldAccessToken,$oldRefreshToken);
 
             return [
                 'user' => $user,
                 'access_token' => $newAccessToken,
                 'refresh_token' => $newRefreshToken,
             ];
-
         } catch (\Throwable $err) {
-            Log::error('User registration failed', ['error' => $err]);
-            throw new \Exception('User registration failed. Please try again later');
+            throw new ApiException('Token refresh failed. Please try again later.', 500, $err);
         }
     }
 }

@@ -4,10 +4,12 @@ namespace App\Domains\Users\Models;
 
 use App\Domains\Boards\Models\Board;
 use App\Domains\Roles\Models\Role;
+use App\Domains\Users\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends  Model
+class User extends Authenticatable implements JWTSubject
 {
     use HasFactory;
 
@@ -30,6 +32,11 @@ class User extends  Model
     public function boards()
     {
         return $this->belongsToMany(Board::class, 'board_user');
+    }
+
+        protected static function newFactory()
+    {
+        return UserFactory::new();
     }
 
         public function getJWTIdentifier()
