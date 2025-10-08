@@ -2,7 +2,9 @@
 
 namespace App\Domains\Users\Services;
 
-use App\Domains\Users\Helpers\AuthTokenManager;
+use App\Domains\Users\DTOs\Auth\UserLoginData;
+use App\Domains\Users\DTOs\Crud\UserCreateData;
+use App\Domains\Users\Helpers\Auth\AuthTokenManager;
 use Illuminate\Support\Facades\Auth;
 use App\Domains\Users\Services\UserCrudService;
 use App\GlobalExceptions\ApiException;
@@ -16,10 +18,10 @@ class UserAuthService
         $this->userCrudService = $userCrudService;
     }
 
-    public function login(array $credentials):array
+    public function login(UserLoginData $credentials):array
     {
         try{         
-            $accessToken = AuthTokenManager::createAccessToken($credentials);
+            $accessToken = AuthTokenManager::createAccessToken($credentials->toAuthArray());
 
             if(!$accessToken){
                 throw new ApiException('Invalid email or password.', 401);
@@ -59,12 +61,12 @@ class UserAuthService
         }    
     }
 
-    public function register(array $credentials):array
+    public function register(UserCreateData $credentials):array
     {
         try {
             $createdUser = $this->userCrudService->store($credentials);
 
-            $accessToken = AuthTokenManager::createAccessToken($credentials);
+            $accessToken = AuthTokenManager::createAccessToken($credentials->toAuthArray());
             $refreshToken = AuthTokenManager::createRefreshToken($createdUser);
 
             return [

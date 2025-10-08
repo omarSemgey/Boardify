@@ -34,6 +34,6 @@ class GlobalServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('global-permission', [GlobalPolicy::class, 'hasPermission']);
+        Gate::define('global-permission', [GlobalPolicy::class, 'userHasAuthorityOver']);
     }
 }

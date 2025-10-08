@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Domains\Users\Helpers;
+namespace App\Domains\Users\Helpers\Auth;
 
-use App\Domains\Users\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Tymon\JWTAuth\Facades\JWTAuth;

@@ -34,12 +34,12 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Board::class, 'board_user');
     }
 
-        protected static function newFactory()
+    protected static function newFactory()
     {
         return UserFactory::new();
     }
 
-        public function getJWTIdentifier()
+    public function getJWTIdentifier()
     {
         return $this->getKey();
     }

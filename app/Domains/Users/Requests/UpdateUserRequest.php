@@ -2,6 +2,7 @@
 
 namespace App\Domains\Users\Requests;
 
+use App\Domains\Users\DTOs\Crud\UserUpdateData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -41,5 +42,15 @@ class UpdateUserRequest extends FormRequest
                 }
             ],
         ];
+    }
+
+    public function toDTO(): UserUpdateData
+    {
+        return new UserUpdateData(
+            name: $this->input('name'),
+            email: $this->input('email'),
+            password: $this->input('password'),
+            profile: $this->file('profile'),
+        );
     }
 }

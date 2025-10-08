@@ -15,6 +15,43 @@ class RegisterAuthenticationTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function unauthenticated_user_can_hit_register()
+    {
+        $response = $this->postJson('/auth/register', [
+            'name' => 'ahmad',
+            'email' => 'ahmad@gmail.com',
+            'password' => 'secret123',
+        ]);
+
+        $response->assertStatus(201);
+
+        $response->assertJsonStructure([
+            'data' => [
+                'user' => [
+                    'id',
+                    'name',
+                    'email',
+                    'profile',
+                ],
+                'authorization' => [
+                    'type',
+                    'expires_in',
+                ],
+            ],
+            'status',
+            'message',
+        ]);
+
+        $response->assertJson([
+            'status' => 'success',
+            'message' => 'User created successfully.',
+        ]);
+
+        $response->assertCookie('access_token');
+        $response->assertCookie('refresh_token');
+    }
+
+    #[Test]
     public function authenticated_user_cannot_hit_register()
     {
         $user = User::factory()->create([

@@ -2,6 +2,8 @@
 
 namespace App\Domains\Users\Services;
 
+use App\Domains\Users\DTOs\Crud\UserCreateData;
+use App\Domains\Users\DTOs\Crud\UserUpdateData;
 use App\GlobalExceptions\ApiException;
 use App\Domains\Users\Models\User;
 use DB;
@@ -11,13 +13,13 @@ use Illuminate\Support\Str;
 
 class UserCrudService
 {
-    public function store(array $data)
+    public function store(UserCreateData $data)
     {
         try{
             $profileExists = isset($data['profile']);
             DB::beginTransaction();
             if($profileExists){
-                $profile = $data['profile'];
+                $profile = $data->profile;
                 $extension = $profile->getClientOriginalExtension();
                 $filename = Str::random(32) . '.' . $extension;
                 
@@ -25,9 +27,9 @@ class UserCrudService
             }
                 
                 $user = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
+                'name' => $data->name,
+                'email' => $data->email,
+                'password' => Hash::make($data->password),
                 'profile' => $profileExists ? Storage::disk('public')->url($path) : null,
             ]);
 
@@ -42,19 +44,19 @@ class UserCrudService
         }
     }
 
-    public function update(array $data,User $user)
+    public function update(UserUpdateData $data,User $user)
     {
         try {
-            $updateData = collect($data)->except('profile','passwords')->toArray();
+            $updateData = $data->toArray();
             $newData=[];
 
-            if( !empty($data['password']) && !Hash::check($data['password'],$user->password)){
-                $newData['password'] = Hash::make($data['password']);
+            if( !empty($data->password) && !Hash::check($data->password,$user->password)){
+                $newData['password'] = Hash::make($data->password);
             }
 
-            $profileExists = isset($data['profile']) && $data['profile'] instanceof \Illuminate\Http\UploadedFile;
+            $profileExists = isset($data->profile) && $data->profile instanceof \Illuminate\Http\UploadedFile;
             if($profileExists){
-                $profile = $data['profile'];
+                $profile = $data->profile;
                 $extension = $profile->getClientOriginalExtension();
                 $filename = Str::random(32) . '.' . $extension;
                 
@@ -65,7 +67,6 @@ class UserCrudService
             }
 
             $user->fill(array_merge($updateData, $newData));
-
 
             if ($user->isDirty() || !empty($newData)) {
                 $user->fill($newData)->save();

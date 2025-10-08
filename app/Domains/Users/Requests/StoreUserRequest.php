@@ -2,6 +2,7 @@
 
 namespace App\Domains\Users\Requests;
 
+use App\Domains\Users\DTOs\Crud\UserCreateData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -42,5 +43,15 @@ class StoreUserRequest extends FormRequest
                 }
             ],
         ];
+    }
+
+    public function toDTO(): UserCreateData
+    {
+        return new UserCreateData(
+            name: $this->validated('name'),
+            email: $this->validated('email'),
+            password: $this->validated('password'),
+            profile: $this->file('profile')
+        );
     }
 }

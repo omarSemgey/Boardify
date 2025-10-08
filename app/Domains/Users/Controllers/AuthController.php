@@ -5,7 +5,7 @@ namespace App\Domains\Users\Controllers;
 use App\Domains\Users\Requests\LoginRequest;
 use App\Domains\Users\Requests\StoreUserRequest;
 
-use App\Domains\Users\Helpers\AuthTokenManager;
+use App\Domains\Users\Helpers\Auth\AuthTokenManager;
 use App\GlobalApiFormatters\BaseApiResource;
 use App\GlobalApiFormatters\AuthResource;
 
@@ -23,8 +23,8 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        $credentials = $request->validated();
-        $result = $this->userAuthservice->login($credentials);
+        $dto = $request->toDTO();
+        $result = $this->userAuthservice->login($dto);
 
         $response = (new AuthResource($result['user']))->withMessage('User logged in successfully.',201)->response();
 
@@ -40,7 +40,8 @@ class AuthController extends Controller
 
     public function register(StoreUserRequest $request)
     {
-        $result = $this->userAuthservice->register($request->validated());
+        $dto = $request->toDTO();
+        $result = $this->userAuthservice->register($dto);
 
         $response =  (new AuthResource($result['user']))->withMessage('User created successfully.',201)->response();
         return AuthTokenManager::attachAuthCookies($response, $result['access_token'], $result['refresh_token']);
