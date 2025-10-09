@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Domains\Users\Requests;
+namespace App\Domains\Users\Requests\Crud;
 
 use App\Domains\Users\DTOs\Crud\UserCreateData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreUserRequest extends FormRequest
+class UserStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

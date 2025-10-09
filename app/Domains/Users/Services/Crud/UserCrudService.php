@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Users\Services;
+namespace App\Domains\Users\Services\Crud;
 
 use App\Domains\Users\DTOs\Crud\UserCreateData;
 use App\Domains\Users\DTOs\Crud\UserUpdateData;
@@ -10,13 +10,14 @@ use DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Log;
 
 class UserCrudService
 {
     public function store(UserCreateData $data)
     {
         try{
-            $profileExists = isset($data['profile']);
+            $profileExists = isset($data->profile);
             DB::beginTransaction();
             if($profileExists){
                 $profile = $data->profile;
@@ -25,8 +26,8 @@ class UserCrudService
                 
                 $path = $profile->storeAs('userProfiles', $filename, 'public');
             }
-                
-                $user = User::create([
+
+            $user = User::create([
                 'name' => $data->name,
                 'email' => $data->email,
                 'password' => Hash::make($data->password),

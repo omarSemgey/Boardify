@@ -2,8 +2,6 @@
 
 namespace App\Domains\Users\Tests\Feature\Auth;
 
-use App\Domains\Users\Models\User;
-use Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

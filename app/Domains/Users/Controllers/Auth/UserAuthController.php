@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Domains\Users\Controllers;
+namespace App\Domains\Users\Controllers\Auth;
 
-use App\Domains\Users\Requests\LoginRequest;
-use App\Domains\Users\Requests\StoreUserRequest;
+use App\Domains\Users\Requests\Auth\UserLoginRequest;
+use App\Domains\Users\Requests\Crud\UserStoreRequest;
 
 use App\Domains\Users\Helpers\Auth\AuthTokenManager;
 use App\GlobalApiFormatters\BaseApiResource;
 use App\GlobalApiFormatters\AuthResource;
 
-use App\Domains\Users\Services\UserAuthService;
+use App\Domains\Users\Services\Auth\UserAuthService;
 
 use App\Http\Controllers\Controller;
 
-class AuthController extends Controller
+class UserAuthController extends Controller
 {
     protected UserAuthService $userAuthservice;
 
@@ -21,7 +21,7 @@ class AuthController extends Controller
         $this->userAuthservice = $userAuthservice;
     }
 
-    public function login(LoginRequest $request)
+    public function login(UserLoginRequest $request)
     {
         $dto = $request->toDTO();
         $result = $this->userAuthservice->login($dto);
@@ -38,7 +38,7 @@ class AuthController extends Controller
         return (new BaseApiResource($user))->withMessage('User found successfully.', 200)->additional(['user' => $user]);
     }    
 
-    public function register(StoreUserRequest $request)
+    public function register(UserStoreRequest $request)
     {
         $dto = $request->toDTO();
         $result = $this->userAuthservice->register($dto);

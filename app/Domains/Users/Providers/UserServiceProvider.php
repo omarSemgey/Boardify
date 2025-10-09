@@ -22,9 +22,9 @@ class UserServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(realpath(__DIR__ . '/../Migrations'));
         Route::middleware('api')->group(function () {
-            require __DIR__ . '/../Routes/Api/UserCrudApi.php';
-            require __DIR__ . '/../Routes/Api/UserApi.php';
-            require __DIR__ . '/../Routes/Api/AuthApi.php';
+            require __DIR__ . '/../Routes/Api/Crud/UserCrudApi.php';
+            require __DIR__ . '/../Routes/Api/Logic/UserLogicApi.php';
+            require __DIR__ . '/../Routes/Api/Auth/UserAuthApi.php';
         });
     }
 }

@@ -1,13 +1,11 @@
 <?php
 
-namespace App\Domains\Users\Controllers;
+namespace App\Domains\Users\Controllers\Curd;
 
-use App\Domains\Users\Requests\StoreUserRequest;
-use App\Domains\Users\Requests\UpdateUserRequest;
+use App\Domains\Users\Requests\Crud\UserUpdateRequest;
 use App\GlobalApiFormatters\BaseApiResource;
 use App\Domains\Users\Models\User;
-use App\Domains\Users\Services\UserCrudService;
-use App\Domains\Users\Services\UserService;
+use App\Domains\Users\Services\Crud\UserCrudService;
 use App\Http\Controllers\Controller;
 
 class UserCrudController extends Controller
@@ -18,7 +16,7 @@ class UserCrudController extends Controller
         $this->userCrudService = $userCrudService;
     }
 
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UserUpdateRequest $request, User $user)
     {
         $dto = $request->toDTO();
         $updatedUser = $this->userCrudService->update($dto,$user);

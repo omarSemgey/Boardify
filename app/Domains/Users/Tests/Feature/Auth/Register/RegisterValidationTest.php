@@ -330,7 +330,7 @@ class RegisterValidationTest extends TestCase
     // Profile
 
     #[Test]
-    public function user_cannot_register_with_non_avatar_profile()
+    public function user_cannot_register_with_non_image_profile()
     {
         Storage::fake('public');
         $profile = UploadedFile::fake()->create('avatar.pdf');

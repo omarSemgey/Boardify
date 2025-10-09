@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Domains\Users\Services;
+namespace App\Domains\Users\Services\Auth;
 
 use App\Domains\Users\DTOs\Auth\UserLoginData;
 use App\Domains\Users\DTOs\Crud\UserCreateData;
 use App\Domains\Users\Helpers\Auth\AuthTokenManager;
+use App\Domains\Users\Services\Crud\UserCrudService;
 use Illuminate\Support\Facades\Auth;
-use App\Domains\Users\Services\UserCrudService;
 use App\GlobalExceptions\ApiException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -72,7 +72,7 @@ class UserAuthService
             return [
                 'user' => $createdUser,
                 'access_token' => $accessToken,
-                'refresh_token' => $refreshToken,
+                'refresh_token' => $refreshToken,   
             ];
 
         }  catch (\Throwable $err) {

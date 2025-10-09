@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Domains\Users\Services;
+namespace App\Domains\Users\Services\Logic;
 
 use App\Domains\Users\Models\User;
 use Illuminate\Support\Facades\Log;
 
-class UserService
+class UserLogicService
 {
     public function getUserBoards(User $user){
-    try{
-        $boards = $user->boards()->get(); 
-        
-        if($boards->isEmpty()) return null;
-        
-        return $boards;
-    }catch (\Throwable $err) {
-        Log::error('Fetching users boards failed. ', ['error' => $err]);
-        throw new \Exception('Fetching users boards failed. Please try again');
-    }
+        try{
+            $boards = $user->boards()->get(); 
+            
+            if($boards->isEmpty()) return null;
+            
+            return $boards;
+        }catch (\Throwable $err) {
+            Log::error('Fetching users boards failed. ', ['error' => $err]);
+            throw new \Exception('Fetching users boards failed. Please try again');
+        }
     }
 
     public function getUserRoles(User $user){

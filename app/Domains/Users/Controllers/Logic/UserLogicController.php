@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Domains\Users\Controllers;
+namespace App\Domains\Users\Controllers\Logic;
 
 use App\GlobalApiFormatters\BaseApiResource;
 use App\Domains\Users\Models\User;
-use App\Domains\Users\Services\UserCrudService;
-use App\Domains\Users\Services\UserService;
+use App\Domains\Users\Services\Crud\UserCrudService;
+use App\Domains\Users\Services\Logic\UserLogicService;
 use App\Http\Controllers\Controller;
 
-class UserController extends Controller
+class UserLogicController extends Controller
 {
-    protected UserService $userService;
+    protected UserLogicService $userService;
 
-    public function __construct(UserService $userService) {
+    public function __construct(UserLogicService $userService) {
         $this->userService = $userService;
     }
 

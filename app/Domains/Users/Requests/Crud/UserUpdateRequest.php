@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Domains\Users\Requests;
+namespace App\Domains\Users\Requests\Crud;
 
 use App\Domains\Users\DTOs\Crud\UserUpdateData;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateUserRequest extends FormRequest
+class UserUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
