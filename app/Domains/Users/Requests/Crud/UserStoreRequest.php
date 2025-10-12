@@ -3,6 +3,7 @@
 namespace App\Domains\Users\Requests\Crud;
 
 use App\Domains\Users\DTOs\Crud\UserCreateData;
+use App\Domains\Users\Rules\UserRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,24 +26,7 @@ class UserStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => 'bail|required|string|min:3|max:30|regex:/^[\p{L}0-9_\s]{3,30}$/u|unique:users',
-            'email' => 'bail|required|string|email:rfc,dns|max:320|unique:users',
-            'password' => 'bail|required|string|min:6|regex:/^[\S]+$/',
-            'profile' =>  [
-                'bail',
-                'sometimes',
-                'image',
-                'mimes:png,jpg,jpeg',
-                'max:4096',
-                Rule::dimensions()->maxWidth(2000)->maxHeight(2000),
-                function ($attribute, $value, $fail) {
-                    if ($value && preg_match('/\.[^.]+\./', $value->getClientOriginalName())) {
-                        $fail('Invalid image file name detected.');
-                    }
-                }
-            ],
-        ];
+        return UserRules::store();
     }
 
     public function toDTO(): UserCreateData

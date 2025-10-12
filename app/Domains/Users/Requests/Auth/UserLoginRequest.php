@@ -3,6 +3,7 @@
 namespace App\Domains\Users\Requests\Auth;
 
 use App\Domains\Users\DTOs\Auth\UserLoginData;
+use App\Domains\Users\Rules\UserRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UserLoginRequest extends FormRequest
@@ -22,11 +23,8 @@ class UserLoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'email' => 'bail|required|string|email:rfc,dns|max:320',
-            'password' => 'bail|required|string|min:6',
-        ];
-    }
+        return UserRules::login();
+    } 
 
         public function toDTO(): UserLoginData
     {

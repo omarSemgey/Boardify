@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Domains\Users\Tests\Feature\Auth;
+namespace App\Domains\Users\Tests\Feature\Crud;
 
-use App\Domains\Users\Models\User;
 use App\Domains\Users\Traits\Auth\UserAuthTestManager;
 use Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class MeAuthenticationTest extends TestCase
+class UserDestroyAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
     use UserAuthTestManager;
     
     #[Test]
-    public function authenticated_user_can_hit_me()
+    public function authenticated_user_can_hit_destroy()
     {
         $register = $this->registerUser([
             'name' => 'test',
@@ -25,7 +24,7 @@ class MeAuthenticationTest extends TestCase
 
         $cookies = $register['cookies'];
 
-        $meResponse = $this->call('GET', '/auth/me', [], $cookies);
+        $meResponse = $this->call('DELETE', '/users/destroy', [], $cookies);
 
         $meResponse->assertStatus(200);
     
@@ -36,12 +35,12 @@ class MeAuthenticationTest extends TestCase
 
         $meResponse->assertJson([
             'status' => 'success',
-            'message' => 'User found successfully.',
+            'message' => 'User deleted successfully.',
         ]);
     }
 
     #[Test]
-    public function unauthenticated_user_cannot_hit_me()
+    public function unauthenticated_user_cannot_hit_destroy()
     {
         $meResponse = $this->getJson('/auth/me');
 

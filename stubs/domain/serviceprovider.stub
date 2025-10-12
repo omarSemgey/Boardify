@@ -1,0 +1,24 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Support\ServiceProvider;
+use {{ repositoryInterface }};
+
+use {{ repositoryImplementation }};
+
+class {{ class }} extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->bind({{ repositoryInterface }}::class, {{ repositoryImplementation }}::class);
+    }
+
+    public function boot(): void
+    {
+        $this->loadMigrationsFrom(realpath(__DIR__ . '/../Migrations'));
+        Route::middleware('api')->group(function () {
+            require __DIR__ . '/../Routes/Api/api.php';
+        });
+    }
+}

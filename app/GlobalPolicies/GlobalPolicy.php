@@ -3,22 +3,22 @@
 namespace App\GlobalPolicies;
 
 use App\Domains\Users\Models\User;
-use App\Domains\Users\Services\UserService;
+use App\Domains\Users\Services\Logic\UserLogicService;
 use Illuminate\Database\Eloquent\Collection;
 
 class GlobalPolicy
 {
-    protected UserService $userService;
+    protected UserLogicService $userLogicService;
 
-    public function __construct(UserService $userService)
+    public function __construct(UserLogicService $userLogicService)
     {
-        $this->userService = $userService;
+        $this->userLogicService = $userLogicService;
     }
 
     public function userHasAuthorityOver(User $user, object $model, string $typeName, string $permissionName): bool
     {
-        $userBoards = $this->userService->getUserBoards($user);
-        $userRoles  = $this->userService->getUserRoles($user);
+        $userBoards = $this->userLogicService->getUserBoards($user);
+        $userRoles  = $this->userLogicService->getUserRoles($user);
 
         if ($userBoards->isEmpty() || $userRoles->isEmpty()) {
             return false;
@@ -43,14 +43,9 @@ class GlobalPolicy
 
     private function roleAllowsAction(Collection $roles, string $typeName, string $permissionName): bool
     {
-        foreach ($roles as $role) {
-            $matchesType = $role->type->name === $typeName;
-            $hasPerm = $role->permissions->pluck('name')->contains($permissionName);
-
-            if ($matchesType && $hasPerm) {
-                return true;
-            }
-        }
-        return false;
+        return $roles->contains(function ($role) use ($typeName, $permissionName) {
+            return $role->type->name === $typeName
+                && $role->permissions->pluck('name')->contains($permissionName);
+        });
     }
 }

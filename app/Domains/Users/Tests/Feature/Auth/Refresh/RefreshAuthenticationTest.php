@@ -2,49 +2,30 @@
 
 namespace App\Domains\Users\Tests\Feature\Auth;
 
-use App\Domains\Users\Helpers\AuthTokenManager;
 use App\Domains\Users\Models\User;
-use App\Domains\Users\Services\UserAuthService;
-use App\GlobalApiFormatters\AuthResource;
+use App\Domains\Users\Traits\Auth\UserAuthTestManager;
 use Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Log;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RefreshAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
+    use UserAuthTestManager;
     
     #[Test]
     public function authenticated_user_can_hit_refresh()
     {
-        $user = User::factory()->create([
+        $register = $this->registerUser([
             'name' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => Hash::make('secret123'),
-        ]);
-        
-        $loginResponse = $this->postJson('/auth/login', [
             'email' => 'test@gmail.com',
             'password' => 'secret123',
         ]);
-        
-        $loginResponse->assertStatus(201);
 
-        $loginResponse->assertCookie('access_token');
-        $loginResponse->assertCookie('refresh_token');
+        $cookies = $register['cookies'];
     
-        $cookieJar = $loginResponse->headers->getCookies();
-        
-        $tokens = [];
-
-        foreach ($cookieJar as $cookie) {
-            $tokens[$cookie->getName()] = $cookie->getValue();
-        }
-    
-        $refreshResponse = $this->call('POST', '/auth/refresh', [], $tokens);
+        $refreshResponse = $this->call('POST', '/auth/refresh', [], $cookies);
 
         $refreshResponse->assertStatus(200);
     
@@ -84,35 +65,15 @@ class RefreshAuthenticationTest extends TestCase
         #[Test]
     public function user_with_invalid_refresh_token_cannot_refresh()
     {
-        $user = User::factory()->create([
+        $register = $this->registerUser([
             'name' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => Hash::make('secret123'),
-        ]);
-        
-        $loginResponse = $this->postJson('/auth/login', [
             'email' => 'test@gmail.com',
             'password' => 'secret123',
         ]);
-        
-        $loginResponse->assertStatus(201);
 
-        $loginResponse->assertCookie('access_token');
-        $loginResponse->assertCookie('refresh_token');
+        $access_token = $register['cookies']['access_token'];
     
-        $cookieJar = $loginResponse->headers->getCookies();
-        
-        $tokens = [];
-
-        foreach ($cookieJar as $cookie) {
-            if($cookie->getName() === 'refresh_token') {
-                $tokens[$cookie->getName()] = 'some-invalid-token';
-            }else{
-                $tokens[$cookie->getName()] = $cookie->getValue();
-            }
-        }
-    
-        $refreshResponse = $this->call('POST', '/auth/refresh', [], $tokens);
+        $refreshResponse = $this->call('POST', '/auth/refresh', [], ['access_token' => $access_token, 'refresh_token' => 'some-invalid-token']);
 
         $refreshResponse->assertStatus(500);
 

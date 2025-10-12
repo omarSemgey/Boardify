@@ -8,6 +8,7 @@ use App\Domains\Users\Helpers\Auth\AuthTokenManager;
 use App\Domains\Users\Services\Crud\UserCrudService;
 use Illuminate\Support\Facades\Auth;
 use App\GlobalExceptions\ApiException;
+use Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserAuthService
@@ -85,6 +86,8 @@ class UserAuthService
         try {
             $refreshToken = request()->cookie('refresh_token');
             $accessToken = request()->cookie('access_token');
+
+            Log::info('Logging out user', ['access_token' => $accessToken, 'refresh_token' => $refreshToken]);
 
             if (!$accessToken) {
                 throw new ApiException('No access token provided', 401);

@@ -2,43 +2,48 @@
 
 namespace App\Domains\Users\Services\Crud;
 
+use App\Domains\Users\Contracts\Repositories\Crud\UserCrudRepositoryInterface;
 use App\Domains\Users\DTOs\Crud\UserCreateData;
 use App\Domains\Users\DTOs\Crud\UserUpdateData;
+use App\Domains\Users\Helpers\Logic\ProfileUploader;
 use App\GlobalExceptions\ApiException;
 use App\Domains\Users\Models\User;
 use DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Log;
 
 class UserCrudService
 {
+    protected UserCrudRepositoryInterface $userRepository;
+
+    public function __construct(UserCrudRepositoryInterface $userRepository)
+    {
+        $this->userRepository = $userRepository;
+    }
+
     public function store(UserCreateData $data)
     {
+        DB::beginTransaction();
         try{
-            $profileExists = isset($data->profile);
-            DB::beginTransaction();
-            if($profileExists){
-                $profile = $data->profile;
-                $extension = $profile->getClientOriginalExtension();
-                $filename = Str::random(32) . '.' . $extension;
-                
-                $path = $profile->storeAs('userProfiles', $filename, 'public');
-            }
-
-            $user = User::create([
+            $userData = [
                 'name' => $data->name,
                 'email' => $data->email,
                 'password' => Hash::make($data->password),
-                'profile' => $profileExists ? Storage::disk('public')->url($path) : null,
-            ]);
+                'profile' => null,
+            ];
+    
+            if($data->profile instanceof \Illuminate\Http\UploadedFile){
+                $path = ProfileUploader::upload($data->profile);
+                $userData['profile'] = Storage::disk('public')->url($path);
+            }
+
+            $user = $this->userRepository->create($userData);
 
             DB::commit();
             return $user;
         }catch (\Throwable $err) {
             DB::rollBack();
-            if (Storage::disk('public')->exists($path)) {
+            if (isset($path) & Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
             throw new ApiException('User creation failed. Please try again later.', 500, $err);
@@ -57,20 +62,16 @@ class UserCrudService
 
             $profileExists = isset($data->profile) && $data->profile instanceof \Illuminate\Http\UploadedFile;
             if($profileExists){
-                $profile = $data->profile;
-                $extension = $profile->getClientOriginalExtension();
-                $filename = Str::random(32) . '.' . $extension;
-                
-                $path = $profile->storeAs('userProfiles', $filename, 'public');
+                $path = ProfileUploader::upload($data->profile);
 
                 $newData['profile'] =  Storage::disk('public')->url($path);
-                Storage::delete($user->profile);
+                if(isset($user->profile)) Storage::delete($user->profile);
             }
 
             $user->fill(array_merge($updateData, $newData));
 
             if ($user->isDirty() || !empty($newData)) {
-                $user->fill($newData)->save();
+                $this->userRepository->update($user, $newData);
             }
 
             return $user;
@@ -83,9 +84,7 @@ class UserCrudService
     {
         try{
 
-            $user->delete();
-
-            return $user;
+            $this->userRepository->delete($user);
 
         } catch (\Throwable $err) {
             throw new ApiException('User deletion failed. Please try again later.', 500, $err);

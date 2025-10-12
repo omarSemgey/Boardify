@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Domains\Users\Tests\Feature\Auth;
+namespace App\Domains\Users\Tests\Feature\Crud;
 
 use App\Domains\Users\Models\User;
+use App\Domains\Users\Traits\Auth\UserAuthTestManager;
 use Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -10,48 +11,31 @@ use PHPUnit\Framework\Attributes\Test;
 use Storage;
 use Tests\TestCase;
 
-class RegisterValidationTest extends TestCase
+class UserUpdateValidationTest extends TestCase
 {
     use RefreshDatabase;
+    use UserAuthTestManager;
 
     // Name
 
-   #[Test]
-    public function user_cannot_register_with_missing_name()
-    {
-        $response = $this->postJson('/auth/register', [
-            'email' => 'test@gmail.com',
-            'password' => 'secret123',
-        ]);
-
-        $response->assertStatus(422);
-
-        $response->assertJsonStructure([
-            'errors',
-            'message',
-        ]);
-
-        $response->assertJson([
-            'message' => 'The name field is required.',
-        ]);
-
-        $response->assertJsonValidationErrors(['name']);
-    }
-
     #[Test]
-    public function user_cannot_register_with_existing_name()
+    public function user_cannot_update_with_existing_name()
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'name' => 'test',
             'email' => 'test@gmail.com',
             'password' => Hash::make('secret123'),
         ]);
-
-        $response = $this->postJson('/auth/register', [
-            'name' => 'test',
+        
+        $register = $this->RegisterUser( [
+            'name' => 'test2',
             'email' => 'test2@gmail.com',
-            'password' => 'secret123',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson( '/users/update', ['name' => 'test'],$cookies);
 
         $response->assertStatus(422);
 
@@ -68,13 +52,17 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_non_string_name()
+    public function user_cannot_update_with_non_string_name()
     {
-        $response = $this->postJson('/auth/register', [
-            'name' => ['test'],
+        $register = $this->RegisterUser( [
+            'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['name' => ['test2']],$cookies);
 
         $response->assertStatus(422);
 
@@ -91,13 +79,17 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_short_name()
+    public function user_cannot_update_with_short_name()
     {
-        $response = $this->postJson('/auth/register', [
-            'name' => 'te',
+        $register = $this->RegisterUser( [
+            'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['name' => 'te'],$cookies);
 
         $response->assertStatus(422);
 
@@ -114,13 +106,17 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_long_name()
+    public function user_cannot_update_with_long_name()
     {
-        $response = $this->postJson('/auth/register', [
-            'email' => 'test@gmail.com',
-            'name' => 'testtesttesttesttesttesttesttes',
-            'password' => 'secret123',
+        $register = $this->RegisterUser( [
+            'name' => 'test2',
+            'email' => 'test2@gmail.com',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['name' => 'testtesttesttesttesttesttesttes'],$cookies);
 
         $response->assertStatus(422);
 
@@ -137,13 +133,17 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_invalid_name_format()
+    public function user_cannot_update_with_invalid_name_format()
     {
-        $response = $this->postJson('/auth/register', [
-            'name' => 'test@!',
-            'email' => 'test@gmail.com',
-            'password' => 'secret123',
+        $register = $this->RegisterUser( [
+            'name' => 'test2',
+            'email' => 'test2@gmail.com',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['name' => 'test@!'],$cookies);
 
         $response->assertStatus(422);
 
@@ -162,52 +162,7 @@ class RegisterValidationTest extends TestCase
     // Email
 
     #[Test]
-    public function user_cannot_register_with_missing_email()
-    {
-        $response = $this->postJson('/auth/register', [
-            'name' => 'test',
-            'password' => 'secret123',
-        ]);
-
-        $response->assertStatus(422);
-
-        $response->assertJsonStructure([
-            'errors',
-            'message',
-        ]);
-
-        $response->assertJson([
-            'message' => 'The email field is required.',
-        ]);
-
-        $response->assertJsonValidationErrors(['email']);
-    }
-
-    #[Test]
-    public function user_cannot_register_with_invalid_email_format()
-    {
-        $response = $this->postJson('/auth/register', [
-            'name' => 'test',
-            'email' => 'testgmail.com',
-            'password' => 'secret123',
-        ]);
-
-        $response->assertStatus(422);
-
-        $response->assertJsonStructure([
-            'errors',
-            'message',
-        ]);
-
-        $response->assertJson([
-            'message' => 'The email field must be a valid email address.',
-        ]);
-
-        $response->assertJsonValidationErrors(['email']);
-    }
- 
-    #[Test]
-    public function user_cannot_register_with_existing_email()
+    public function user_cannot_update_with_existing_email()
     {
         $user = User::factory()->create([
             'name' => 'test',
@@ -233,38 +188,19 @@ class RegisterValidationTest extends TestCase
 
         $response->assertJsonValidationErrors(['email']);
     }
- 
-    #[Test]
-    public function user_cannot_register_with_long_email()
-    {
-        $response = $this->postJson('/auth/register', [
-            'name' => 'omar',
-            'email' => 'testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest@gmail.com',
-            'password' => 'secret123',
-        ]);
-
-        $response->assertStatus(422);
-
-        $response->assertJsonStructure([
-            'errors',
-            'message',
-        ]);
-
-        $response->assertJson([
-            'message' => 'The email field must not be greater than 320 characters.',
-        ]);
-
-        $response->assertJsonValidationErrors(['email']);
-    }
 
     #[Test]
-    public function user_cannot_register_with_non_string_email()
+    public function user_cannot_update_with_non_string_email()
     {
-        $response = $this->postJson('/auth/register', [
+        $register = $this->RegisterUser( [
             'name' => 'test',
-            'email' => ['test@gmail.com'],
-            'password' => 'secret123',
+            'email' => 'test@gmail.com',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['email' => ['test@gmail.com']],$cookies);
 
         $response->assertStatus(422);
 
@@ -280,15 +216,46 @@ class RegisterValidationTest extends TestCase
         $response->assertJsonValidationErrors(['email']);
     }
 
-    // Password
-
+     
     #[Test]
-    public function user_cannot_register_with_missing_password()
+    public function user_cannot_update_with_long_email()
     {
-        $response = $this->postJson('/auth/register', [
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['email' => 'testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest@gmail.com'],$cookies);
+        
+        $response->assertStatus(422);
+
+        $response->assertJsonStructure([
+            'errors',
+            'message',
+        ]);
+
+        $response->assertJson([
+            'message' => 'The email field must not be greater than 320 characters.',
+        ]);
+
+        $response->assertJsonValidationErrors(['email']);
+    }
+
+    #[Test]
+    public function user_cannot_update_with_invalid_email_format()
+    {
+        $register = $this->RegisterUser( [
+            'name' => 'test',
+            'email' => 'test@gmail.com',
+            'password' => Hash::make('secret123'),
+        ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['email' => 'testgmail.com'],$cookies);
 
         $response->assertStatus(422);
 
@@ -298,20 +265,26 @@ class RegisterValidationTest extends TestCase
         ]);
 
         $response->assertJson([
-            'message' => 'The password field is required.',
+            'message' => 'The email field must be a valid email address.',
         ]);
 
-        $response->assertJsonValidationErrors(['password']);
+        $response->assertJsonValidationErrors(['email']);
     }
 
+    // Password
+
     #[Test]
-    public function user_cannot_register_with_short_password()
+    public function user_cannot_update_with_short_password()
     {
-        $response = $this->postJson('/auth/register', [
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'sec',
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson('/users/update', ['password' => 'sec'],$cookies);
 
         $response->assertStatus(422);
 
@@ -330,18 +303,21 @@ class RegisterValidationTest extends TestCase
     // Profile
 
     #[Test]
-    public function user_cannot_register_with_non_image_profile()
+    public function user_cannot_update_with_non_image_profile()
     {
         Storage::fake('public');
         $profile = UploadedFile::fake()->create('avatar.pdf');
-    
-        $response = $this->postJson('/auth/register', [
+
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
-            'profile' => $profile,
+            'password' => Hash::make('secret123'),
         ]);
 
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson( '/users/update', ['profile' => $profile],$cookies);
+    
         $response->assertStatus(422);
 
         $response->assertJsonStructure([
@@ -357,15 +333,18 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_invalid_mime_type_profile()
+    public function user_cannot_update_with_invalid_mime_type_profile()
     {
-    $profile = UploadedFile::fake()->create('avatar.gif',);
-        $response = $this->postJson('/auth/register', [
+        $profile = UploadedFile::fake()->create('avatar.gif',);
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
-            'profile' => $profile,
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson( '/users/update', ['profile' => $profile],$cookies);
 
         $response->assertStatus(422);
 
@@ -382,15 +361,19 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_too_large_profile()
+    public function user_cannot_update_with_too_large_profile()
     {
         $profile = UploadedFile::fake()->create('avatar.png')->size(5000);
-        $response = $this->postJson('/auth/register', [
+
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
-            'profile' => $profile,
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson( '/users/update', ['profile' => $profile],$cookies);
 
         $response->assertStatus(422);
 
@@ -407,15 +390,19 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_profile_exceeding_max_dimensions()
+    public function user_cannot_update_with_profile_exceeding_max_dimensions()
     {
         $profile = UploadedFile::fake()->image('avatar.png', 3000 , 3000);
-        $response = $this->postJson('/auth/register', [
+
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
-            'profile' => $profile,
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson( '/users/update', ['profile' => $profile],$cookies);
 
         $response->assertStatus(422);
 
@@ -431,15 +418,19 @@ class RegisterValidationTest extends TestCase
     }
 
     #[Test]
-    public function user_cannot_register_with_invalid_profile_filename()
+    public function user_cannot_update_with_invalid_profile_filename()
     {
         $profile = UploadedFile::fake()->image('avatar.bad.png');
-        $response = $this->postJson('/auth/register', [
+
+        $register = $this->RegisterUser( [
             'name' => 'test',
             'email' => 'test@gmail.com',
-            'password' => 'secret123',
-            'profile' => $profile,
+            'password' => Hash::make('secret123'),
         ]);
+
+        $cookies = $register['cookies'];
+
+        $response = $this->postJson( '/users/update', ['profile' => $profile],$cookies);
 
         $response->assertStatus(422);
 

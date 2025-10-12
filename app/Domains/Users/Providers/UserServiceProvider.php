@@ -2,6 +2,8 @@
 
 namespace App\Domains\Users\Providers;
 
+use App\Domains\Users\Contracts\Repositories\Crud\UserCrudRepositoryInterface;
+use App\Domains\Users\Repositories\Crud\UserCrudRepository;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Domains\Users\Models\User;
@@ -13,6 +15,7 @@ class UserServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(UserCrudRepositoryInterface::class, UserCrudRepository::class);
     }
 
     /**

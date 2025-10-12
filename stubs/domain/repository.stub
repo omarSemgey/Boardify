@@ -1,0 +1,10 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ repositoryInterface }};
+
+class {{ class }} implements {{ repositoryInterface }}
+{
+    //
+}

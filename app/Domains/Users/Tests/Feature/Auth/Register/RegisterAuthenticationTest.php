@@ -16,8 +16,8 @@ class RegisterAuthenticationTest extends TestCase
     public function unauthenticated_user_can_hit_register()
     {
         $response = $this->postJson('/auth/register', [
-            'name' => 'ahmad',
-            'email' => 'ahmad@gmail.com',
+            'name' => 'test',
+            'email' => 'test@gmail.com',
             'password' => 'secret123',
         ]);
 
@@ -58,22 +58,22 @@ class RegisterAuthenticationTest extends TestCase
             'password' => Hash::make('secret123'),
         ]);
 
-        $firstResponse = $this->postJson('/auth/login', [
+        $loginResponse = $this->postJson('/auth/login', [
             'email' => $user->email,
             'password' => 'secret123',
         ]);
 
-        $firstResponse->assertStatus(201);
+        $loginResponse->assertStatus(201);
 
-        $secondResponse = $this->postJson('/auth/register', [
+        $registerResponse = $this->postJson('/auth/register', [
             'name' => 'test2',
             'email' => 'test2@gmail.com',
             'password' => 'secret123',
         ]);
 
-        $secondResponse->assertStatus(403);
+        $registerResponse->assertStatus(403);
 
-        $secondResponse->assertJson([
+        $registerResponse->assertJson([
             'status' => 'failed',
             'message' => 'You are already logged in.',
         ]);

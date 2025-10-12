@@ -3,6 +3,7 @@
 namespace App\Domains\Users\Tests\Feature\Auth;
 
 use App\Domains\Users\Models\User;
+use App\Domains\Users\Traits\Auth\UserAuthTestManager;
 use Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Log;
@@ -12,32 +13,20 @@ use Tests\TestCase;
 class RefreshLifecycleTest extends TestCase
 {
     use RefreshDatabase;
+    use UserAuthTestManager;
 
     #[Test]
     public function old_access_token_is_invalid_after_refresh()
     {
-        $user = User::factory()->create([
+        $register = $this->registerUser([
             'name' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => Hash::make('secret123'),
-        ]);
-        
-        $loginResponse = $this->postJson('/auth/login', [
             'email' => 'test@gmail.com',
             'password' => 'secret123',
         ]);
-        
-        $loginResponse->assertStatus(201);
-    
-        $cookieJar = $loginResponse->headers->getCookies();
-        
-        $tokens = [];
 
-        foreach ($cookieJar as $cookie) {
-            $tokens[$cookie->getName()] = $cookie->getValue();
-        }
+        $cookies = $register['cookies'];
     
-        $refreshResponse = $this->call('POST', '/auth/refresh', [], $tokens);
+        $refreshResponse = $this->call('POST', '/auth/refresh', [], $cookies);
 
         $refreshResponse->assertStatus(200);
     
@@ -45,7 +34,7 @@ class RefreshLifecycleTest extends TestCase
             'message' => 'Token refreshed successfully.',
         ]);
 
-        $meResponse = $this->call('GET', '/auth/me', [], $tokens);
+        $meResponse = $this->call('GET', '/auth/me', [], $cookies);
 
         $meResponse->assertStatus(404);
 
@@ -65,50 +54,22 @@ class RefreshLifecycleTest extends TestCase
     #[Test]
     public function old_refresh_token_cannot_be_reused_after_refresh()
     {
-        $user = User::factory()->create([
+        $register = $this->registerUser([
             'name' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => Hash::make('secret123'),
-        ]);
-        
-        $loginResponse = $this->postJson('/auth/login', [
             'email' => 'test@gmail.com',
             'password' => 'secret123',
         ]);
-        
-        $loginResponse->assertStatus(201);
 
-        $loginResponse->assertCookie('access_token');
-        $loginResponse->assertCookie('refresh_token');
+        $cookies = $register['cookies'];
     
-        $cookieJar = $loginResponse->headers->getCookies();
-        
-        $tokens = [];
-
-        foreach ($cookieJar as $cookie) {
-            $tokens[$cookie->getName()] = $cookie->getValue();
-        }
-    
-        $firstRefreshResponse = $this->call('POST', '/auth/refresh', [], $tokens);
+        $firstRefreshResponse = $this->call('POST', '/auth/refresh', [], $cookies);
 
         $firstRefreshResponse->assertStatus(200);
-
-        Log::info('First Refresh Response: ' ,[$firstRefreshResponse->getContent()]);
-
-        $firstRefreshResponse->assertJsonStructure([
-            'status',
-            'message',
-        ]);
-    
-        $firstRefreshResponse->assertJson([
-            'status' => 'success',
-            'message' => 'Token refreshed successfully.',
-        ]);
 
         $firstRefreshResponse->assertCookie('access_token');
         $firstRefreshResponse->assertCookie('refresh_token');
 
-        $secondRefreshResponse = $this->call('POST', '/auth/refresh', [], $tokens);
+        $secondRefreshResponse = $this->call('POST', '/auth/refresh', [], $cookies);
 
         $secondRefreshResponse->assertStatus(500);
 
@@ -128,32 +89,17 @@ class RefreshLifecycleTest extends TestCase
     #[Test]
     public function refreshed_access_token_grants_access()
     {
-        $user = User::factory()->create([
+        $register = $this->registerUser([
             'name' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => Hash::make('secret123'),
-        ]);
-        
-        $loginResponse = $this->postJson('/auth/login', [
             'email' => 'test@gmail.com',
             'password' => 'secret123',
         ]);
-       
-        $loginResponse->assertStatus(201);
-        
-        $loginResponse->assertCookie('access_token');
-        $loginResponse->assertCookie('refresh_token');
-        
-    
-        $firstCookieJar = $loginResponse->headers->getCookies();
-        
-        $firstTokens = [];
 
-        foreach ($firstCookieJar as $cookie) {
-            $firstTokens[$cookie->getName()] = $cookie->getValue();
-        }
+        $cookies = $register['cookies'];
+
+        $firstCookies = $register['cookies'];
     
-        $refreshResponse = $this->call('POST', '/auth/refresh', [], $firstTokens);
+        $refreshResponse = $this->call('POST', '/auth/refresh', [], $firstCookies);
 
         $refreshResponse->assertStatus(200);
     
@@ -164,15 +110,9 @@ class RefreshLifecycleTest extends TestCase
         $refreshResponse->assertCookie('access_token');
         $refreshResponse->assertCookie('refresh_token');
 
-        $secondCookieJar = $refreshResponse->headers->getCookies();
+        $secondCookies = $this->extractCookies($refreshResponse);
 
-        $SecondTokens = [];
-
-        foreach ($secondCookieJar as $cookie) {
-            $SecondTokens[$cookie->getName()] = $cookie->getValue();
-        }
-
-        $meResponse = $this->call('GET', '/auth/me', [], $SecondTokens);
+        $meResponse = $this->call('GET', '/auth/me', [], $secondCookies);
 
         $meResponse->assertStatus(200);
 
